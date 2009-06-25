@@ -5,15 +5,16 @@ import kdtree
 import os
 import os.path
 import cPickle
+from datetime import datetime
+import operator
 
 DIR='favicons_sample'
 KDTREE_PICKLE='kdtree.dat'
 
 class ImageOps:
     favicon_path = os.path.join(os.path.dirname(__file__),DIR)
-    def __init__(self, image):
-        self.image_name = image
-        self.im = Image.open(image).convert('RGB')
+    def __init__(self, images):
+        self.ims = [ Image.open(image).convert('RGB') for image in images ]
         self.load_favicons()
     
         
@@ -43,16 +44,29 @@ class ImageOps:
         
             
 
+    nearest_cache = {}
     def mosaic(self):
-        width, height = self.im.size
-        new_im = Image.new(self.im.mode, (height * 16, width * 16))
-        p_data = self.im.load()
-        for x in xrange(0,width):
-            for y in xrange(0,height):
-                nn = kdtree.nearestn(self.yuv(p_data[x,y]), self.favicons)[0].location.data
-                new_im.paste(Image.open('%s/%s' % (DIR,nn)), (x * 16 , y * 16))
+        ts = []
+        for im in self.ims:
+          t0 = datetime.now()
+          width, height = im.size
+          new_im = Image.new(im.mode, (height * 16, width * 16))
+          p_data = im.load()
+          for x in xrange(0,width):
+              for y in xrange(0,height):
+                  key = p_data[x,y]
+                  try:
+                    nn = self.nearest_cache[key] 
+                  except KeyError:
+                    nn = kdtree.nearestn(self.yuv(key), self.favicons)[0].location.data
+                    self.nearest_cache[key] = nn
 
-        new_im.show()
+                  new_im.paste(Image.open('%s/%s' % (DIR,nn)), (x * 16 , y * 16))
+          ts.append(datetime.now()-t0)
+          print nn, reduce(operator.add,ts)/len(ts)
+
+        if len(self.ims) == 1:
+           new_im.show()
                 
 
     def pixelate(self,box_size=10):
@@ -88,5 +102,5 @@ class ImageOps:
 
 
 if __name__ == '__main__':
-    image = ImageOps(sys.argv[1])
+    image = ImageOps(sys.argv[1:])
     image.mosaic()
