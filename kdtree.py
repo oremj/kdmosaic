@@ -4,18 +4,22 @@ class P:
         self.data = data
         self.point = tuple(int(p) for p in point)
  
-def hp_closest(point, hp):
+
+def hr_closest(point, hr):
+    '''Finds closest point in hyperrectangle to point'''
     p = []
     for d in range(len(point)):
-        hr_min = hp[0][d]
-        hr_max = hp[1][d]
+        hr_min = hr[0][d]
+        hr_max = hr[1][d]
         t = point[d]
         if t <= hr_min: p.append(hr_min)
         elif hr_min < t < hr_max: p.append(t)
         else: p.append(hr_max)
     return tuple(p) 
         
+
 def kdtree(pointList, depth=0):
+    '''Builds kdtree from list of points'''
     if not pointList:
         return
  
@@ -38,6 +42,7 @@ def kdtree(pointList, depth=0):
 
 dist_cache = {}
 def distance(p1, p2):
+    '''Computes distance between two points'''
     global dist_cache
     try:
         return dist_cache[p1,p2]
@@ -47,6 +52,7 @@ def distance(p1, p2):
         return d
 
 def nearestn(point,root,best=(None, 1e400), hr=None):
+    '''Return nearest neighbor to point'''
     if hr == None:
         hr = []
         hr.append([0 for i in range(len(point))])
@@ -77,7 +83,7 @@ def nearestn(point,root,best=(None, 1e400), hr=None):
 
     if dist < best: best = dist
     
-    if distance(point, hp_closest(point, further_hr)) < best:
+    if distance(point, hr_closest(point, further_hr)) < best:
         if distance(point, n.location.point) < best:
             nearest = n
             best = distance(point, n.location.point)
