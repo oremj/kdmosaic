@@ -4,7 +4,7 @@ import sys
 import kdtree
 import os
 import os.path
-import pickle
+import cPickle
 
 DIR='favicons_sample'
 KDTREE_PICKLE='kdtree.dat'
@@ -28,7 +28,7 @@ class ImageOps:
         return (  ) 
     def load_favicons(self):
         try:
-          self.favicons = pickle.load(open(KDTREE_PICKLE))
+          self.favicons = cPickle.load(open(KDTREE_PICKLE))
         except IOError:
           self.favicons = []
           for file in os.listdir(self.favicon_path):
@@ -39,7 +39,7 @@ class ImageOps:
                 print 'skipping', file
                 continue
           self.favicons = kdtree.kdtree(self.favicons)
-          pickle.dump(self.favicons, open(KDTREE_PICKLE, 'w+'))
+          cPickle.dump(self.favicons, open(KDTREE_PICKLE, 'w+'))
         
             
 
