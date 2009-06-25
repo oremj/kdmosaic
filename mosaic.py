@@ -4,10 +4,13 @@ import sys
 import kdtree
 import os
 import os.path
+import pickle
 
+DIR='favicons_sample'
+KDTREE_PICKLE='kdtree.dat'
 
 class ImageOps:
-    favicon_path = os.path.join(os.path.dirname(__file__),'favicons_sample')
+    favicon_path = os.path.join(os.path.dirname(__file__),DIR)
     def __init__(self, image):
         self.image_name = image
         self.im = Image.open(image).convert('RGB')
@@ -24,13 +27,19 @@ class ImageOps:
         
         return (  ) 
     def load_favicons(self):
-        self.favicons = []
-        cf = open("cache_file")
-        for l in cf:
-            l = l.strip()
-            file,r,g,b = l.split(",")
-            self.favicons.append(kdtree.P(file, self.yuv((r,g,b))))
-        self.favicons = kdtree.kdtree(self.favicons)
+        try:
+          self.favicons = pickle.load(open(KDTREE_PICKLE))
+        except IOError:
+          self.favicons = []
+          for file in os.listdir(self.favicon_path):
+              try:
+                r,g,b = Image.open('%s/%s' % (DIR,file)).resize((1,1), Image.ANTIALIAS).convert('RGB').load()[0,0]
+                self.favicons.append(kdtree.P(file, self.yuv((r,g,b))))
+              except IOError:
+                print 'skipping', file
+                continue
+          self.favicons = kdtree.kdtree(self.favicons)
+          pickle.dump(self.favicons, open(KDTREE_PICKLE, 'w+'))
         
             
 
@@ -41,7 +50,7 @@ class ImageOps:
         for x in xrange(0,width):
             for y in xrange(0,height):
                 nn = kdtree.nearestn(self.yuv(p_data[x,y]), self.favicons)[0].location.data
-                new_im.paste(Image.open(nn), (x * 16 , y * 16))
+                new_im.paste(Image.open('%s/%s' % (DIR,nn)), (x * 16 , y * 16))
 
         new_im.show()
                 
