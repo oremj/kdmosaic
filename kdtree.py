@@ -42,7 +42,9 @@ def distance(p1, p2):
     try:
         return dist_cache[p1,p2]
     except KeyError:
-        return sum((i - j) ** 2 for i,j in zip(p1, p2))
+        d = sum((i - j) ** 2 for i,j in zip(p1, p2))
+        dist_cache[p1,p2] = d
+        return d
 
 def nearestn(point,root,best=(None, 1e400), hr=None):
     if hr == None:
