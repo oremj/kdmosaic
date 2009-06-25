@@ -45,6 +45,7 @@ class ImageOps:
             
 
     nearest_cache = {}
+    img_cache = {}
     def mosaic(self):
         ts = []
         for im in self.ims:
@@ -61,9 +62,16 @@ class ImageOps:
                     nn = kdtree.nearestn(self.yuv(key), self.favicons)[0].location.data
                     self.nearest_cache[key] = nn
 
-                  new_im.paste(Image.open('%s/%s' % (DIR,nn)), (x * 16 , y * 16))
-          ts.append(datetime.now()-t0)
-          print nn, reduce(operator.add,ts)/len(ts)
+                  try:
+                    img = self.img_cache[nn]
+                  except KeyError:
+                    img = Image.open('%s/%s' % (DIR,nn))
+                    self.img_cache[nn] = img
+
+                  new_im.paste(img, (x * 16 , y * 16))
+          t = datetime.now()-t0
+          ts.append(t)
+          print nn, t, reduce(operator.add,ts)/len(ts)
 
         if len(self.ims) == 1:
            new_im.show()
