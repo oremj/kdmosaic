@@ -51,8 +51,12 @@ def removenode(startnode):
         startnode.leftChild = new_startnode.leftChild
         startnode.rightChild = new_startnode.rightChild
         startnode.depth = new_startnode.dep
+
         try:
             startnode.leftChild.parent = (startnode, 'leftChild')
+        except AttributeError: pass
+
+        try:
             startnode.rightChild.parent = (startnode, 'rightChild')
         except AttributeError: pass
 
@@ -77,8 +81,12 @@ def kdtree(pointList, depth=0):
     node.location = pointList[median]
     node.leftChild = kdtree(pointList[0:median], depth+1)
     node.rightChild = kdtree(pointList[median+1:], depth+1)
+
     try:
         node.leftChild.parent = (node, 'leftChild')
+    except AttributeError: pass
+
+    try:
         node.rightChild.parent = (node, 'rightChild')
     except AttributeError: pass
 

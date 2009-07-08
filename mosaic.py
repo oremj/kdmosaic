@@ -12,12 +12,13 @@ DIR='favicons_sample'
 KDTREE_PICKLE='kdtree.dat'
 
 class ImageOps:
+
     favicon_path = os.path.join(os.path.dirname(__file__),DIR)
+
     def __init__(self, images):
         self.ims = [ Image.open(image).convert('RGB') for image in images ]
         self.load_favicons()
     
-        
     def yuv(self, rgb):
         r,g,b = [ int(i) for i in rgb ]
         return r,g,b
@@ -25,8 +26,6 @@ class ImageOps:
         v = int((0.439 * r) - (0.368 * g) - (0.071 * b) + 128)
         u = int(-(0.148 * r) - (0.291 * g) + (0.439 * b) + 128)
 
-        
-        return (  ) 
     def load_favicons(self):
         try:
           self.favicons = cPickle.load(open(KDTREE_PICKLE))
@@ -41,35 +40,33 @@ class ImageOps:
                 continue
           self.favicons = kdtree.kdtree(self.favicons)
           cPickle.dump(self.favicons, open(KDTREE_PICKLE, 'w+'))
-        
-            
 
-    nearest_cache = {}
     img_cache = {}
     def mosaic(self, tile_size = 16):
-        item_count = kdtree.countitems(self.favicons)
-        num_iterations = 0
         ts = []
         for im in self.ims:
             t0 = datetime.now()
             width, height = im.size
             new_im = Image.new(im.mode, (height * tile_size, width * tile_size))
             p_data = im.load()
+
             for y in xrange(0,height):
                 for x in xrange(0,width):
-                    num_iterations += 1
                     key = p_data[x,y]
                     node = kdtree.nearestn(self.yuv(key), self.favicons)[0]
                     nn = node.location.data 
                     kdtree.removenode(node)
-
-                    img = Image.open('%s/%s' % (DIR,nn))
+                    try:
+                        img = self.img_cache[nn]
+                    except KeyError:
+                        img = Image.open('%s/%s' % (DIR,nn))
+                        self.img_cache[nn] = img
 
                     new_im.paste(img, (x * tile_size, y * tile_size))
-          t = datetime.now()-t0
-          ts.append(t)
-          print nn, t, reduce(operator.add,ts)/len(ts)
-          print item_count - kdtree.countitems(self.favicons), num_iterations
+
+            t = datetime.now()-t0
+            ts.append(t)
+            print t, reduce(operator.add,ts)/len(ts)
 
         if len(self.ims) == 1:
            new_im.show()
@@ -102,8 +99,6 @@ class ImageOps:
             for y in xrange(0,height):
                 row = y / box_size
                 new_p_data[x,y] = color_avgs[row,column]
-
-
         new_im.show()
 
 
