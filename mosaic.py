@@ -7,6 +7,7 @@ import os.path
 import cPickle
 from datetime import datetime
 import operator
+import random
 
 DIR='favicons_sample'
 KDTREE_PICKLE='kdtree.dat'
@@ -50,19 +51,20 @@ class ImageOps:
             new_im = Image.new(im.mode, (height * tile_size, width * tile_size))
             p_data = im.load()
 
-            for y in xrange(0,height):
-                for x in xrange(0,width):
-                    key = p_data[x,y]
-                    node = kdtree.nearestn(self.yuv(key), self.favicons)[0]
-                    nn = node.location.data 
-                    kdtree.removenode(node)
-                    try:
-                        img = self.img_cache[nn]
-                    except KeyError:
-                        img = Image.open('%s/%s' % (DIR,nn))
-                        self.img_cache[nn] = img
+            all_points = [ (x, y) for x in range(width) for y in range(height) ]
+            random.shuffle(all_points)
+            for p in all_points: 
+                key = p_data[p]
+                node = kdtree.nearestn(self.yuv(key), self.favicons)[0]
+                nn = node.location.data 
+                kdtree.removenode(node)
+                try:
+                    img = self.img_cache[nn]
+                except KeyError:
+                    img = Image.open('%s/%s' % (DIR,nn))
+                    self.img_cache[nn] = img
 
-                    new_im.paste(img, (x * tile_size, y * tile_size))
+                new_im.paste(img, (p[0] * tile_size, p[1] * tile_size))
 
             t = datetime.now()-t0
             ts.append(t)
