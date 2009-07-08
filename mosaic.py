@@ -51,21 +51,21 @@ class ImageOps:
         num_iterations = 0
         ts = []
         for im in self.ims:
-          t0 = datetime.now()
-          width, height = im.size
-          new_im = Image.new(im.mode, (height * tile_size, width * tile_size))
-          p_data = im.load()
-          for x in xrange(0,width):
-              for y in xrange(0,height):
-                  num_iterations += 1
-                  key = p_data[x,y]
-                  node = kdtree.nearestn(self.yuv(key), self.favicons)[0]
-                  nn = node.location.data 
-                  kdtree.removenode(node)
+            t0 = datetime.now()
+            width, height = im.size
+            new_im = Image.new(im.mode, (height * tile_size, width * tile_size))
+            p_data = im.load()
+            for y in xrange(0,height):
+                for x in xrange(0,width):
+                    num_iterations += 1
+                    key = p_data[x,y]
+                    node = kdtree.nearestn(self.yuv(key), self.favicons)[0]
+                    nn = node.location.data 
+                    kdtree.removenode(node)
 
-                  img = Image.open('%s/%s' % (DIR,nn))
+                    img = Image.open('%s/%s' % (DIR,nn))
 
-                  new_im.paste(img, (x * tile_size, y * tile_size))
+                    new_im.paste(img, (x * tile_size, y * tile_size))
           t = datetime.now()-t0
           ts.append(t)
           print nn, t, reduce(operator.add,ts)/len(ts)
