@@ -17,6 +17,44 @@ def hr_closest(point, hr):
         else: p.append(hr_max)
     return tuple(p) 
         
+def countitems(root):
+    tmp = [root]
+    count = 1
+    while tmp:
+        node = tmp.pop()
+        count += 1
+        if node.leftChild:
+            tmp.append(node.leftChild)
+        if node.rightChild:
+            tmp.append(node.rightChild)
+
+    return count
+def removenode(startnode):
+    points = []
+    tmp = [startnode]
+
+    while tmp:
+        node = tmp.pop()
+        if node.leftChild:
+            tmp.append(node.leftChild)
+            points.append(node.leftChild.location)
+        if node.rightChild:
+            tmp.append(node.rightChild)
+            points.append(node.rightChild.location)
+    
+    if not points:
+        parent, branch = startnode.parent 
+        setattr(parent, branch, None)
+    else:
+        new_startnode = kdtree(points,startnode.axis) 
+        startnode.location = new_startnode.location
+        startnode.leftChild = new_startnode.leftChild
+        startnode.rightChild = new_startnode.rightChild
+        startnode.depth = new_startnode.dep
+        try:
+            startnode.leftChild.parent = (startnode, 'leftChild')
+            startnode.rightChild.parent = (startnode, 'rightChild')
+        except AttributeError: pass
 
 def kdtree(pointList, depth=0):
     '''Builds kdtree from list of points'''
@@ -33,10 +71,17 @@ def kdtree(pointList, depth=0):
  
     # Create node and construct subtrees
     node = Node()
+    node.dep = depth
+    node.parent = None
     node.axis = axis
     node.location = pointList[median]
     node.leftChild = kdtree(pointList[0:median], depth+1)
     node.rightChild = kdtree(pointList[median+1:], depth+1)
+    try:
+        node.leftChild.parent = (node, 'leftChild')
+        node.rightChild.parent = (node, 'rightChild')
+    except AttributeError: pass
+
     return node
 
 

@@ -46,32 +46,30 @@ class ImageOps:
 
     nearest_cache = {}
     img_cache = {}
-    def mosaic(self):
+    def mosaic(self, tile_size = 16):
+        item_count = kdtree.countitems(self.favicons)
+        num_iterations = 0
         ts = []
         for im in self.ims:
           t0 = datetime.now()
           width, height = im.size
-          new_im = Image.new(im.mode, (height * 16, width * 16))
+          new_im = Image.new(im.mode, (height * tile_size, width * tile_size))
           p_data = im.load()
           for x in xrange(0,width):
               for y in xrange(0,height):
+                  num_iterations += 1
                   key = p_data[x,y]
-                  try:
-                    nn = self.nearest_cache[key] 
-                  except KeyError:
-                    nn = kdtree.nearestn(self.yuv(key), self.favicons)[0].location.data
-                    self.nearest_cache[key] = nn
+                  node = kdtree.nearestn(self.yuv(key), self.favicons)[0]
+                  nn = node.location.data 
+                  kdtree.removenode(node)
 
-                  try:
-                    img = self.img_cache[nn]
-                  except KeyError:
-                    img = Image.open('%s/%s' % (DIR,nn))
-                    self.img_cache[nn] = img
+                  img = Image.open('%s/%s' % (DIR,nn))
 
-                  new_im.paste(img, (x * 16 , y * 16))
+                  new_im.paste(img, (x * tile_size, y * tile_size))
           t = datetime.now()-t0
           ts.append(t)
           print nn, t, reduce(operator.add,ts)/len(ts)
+          print item_count - kdtree.countitems(self.favicons), num_iterations
 
         if len(self.ims) == 1:
            new_im.show()
